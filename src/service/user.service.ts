@@ -2,4 +2,4 @@ export const createUser = "INSERT INTO users (userId, firstName, lastName, email
 
 export const getAllUser = "SELECT * FROM users";
 
-export const checkIfUserExist = "SELECT * FROM users WHERE email = $1"
+export const checkIfUserExist = "SELECT * FROM users WHERE email = $1 "

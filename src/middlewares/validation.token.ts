@@ -21,7 +21,7 @@ const validateToken =  (req:URequest, res: Response, next:NextFunction) => {
             res.status(400).send("Invalid token")
         };
 
-        jwt.verify(token, process.env.ACCESS_KEY!, (err:any, decoded:any) => {
+        jwt.verify(token, process.env.ACCESS_TOKEN!, (err:any, decoded:any) => {
             if (err){
                 res.status(401).send ("Unauthorized user or token has expired")
             };

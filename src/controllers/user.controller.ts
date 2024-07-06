@@ -5,60 +5,67 @@ import {
   createUser,
   getAllUser,
 } from "../service/user.service";
-import bcrypt from "bcryptjs"
-import {v4 as uuidV4} from "uuid"
-import { URequest } from "../interfaces/user.interface";
-
+import bcrypt from "bcryptjs";
+import { v4 as uuidV4 } from "uuid";
+import { URequest, userInterface } from "../interfaces/user.interface";
+import jwt from "jsonwebtoken";
 
 // @des Register User
 // @route POST /api/auth/register
 // @access Public
-export const registerUser = async (req: Request, res: Response, next:NextFunction) => {
-    
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { firstName, lastName, email, password, phone } = req.body;
 
-    if (!firstName || !lastName || !email || !password ) {
+    if (!firstName || !lastName || !email || !password) {
       res.status(422);
       throw new Error("All field are required!");
     }
 
     const checkUser = await Pool.query(checkIfUserExist, [email]);
 
-    if (checkUser.rows[0]){
-        res.status (422);
-        throw new Error ("User already exist!")
-    };
-
-    // Generating a unique ID
-    const uniqueId = uuidV4()
-
-    // Hashed my password
-    const hashPassword = await bcrypt.hash (password, 10);
-
-    // Created new User
-    const user = await Pool.query(createUser,  [uniqueId, firstName, lastName, email, hashPassword, phone]);
-
-    if (user){
-        res.status (201).json({
-            status :"success",
-            message: "Registration Successful!",
-            data: user.rows
-        })
-
-    } else {
-        res.status(400);
-        throw new Error("User was not registered successfully!")
+    if (checkUser.rows[0]) {
+      res.status(422);
+      throw new Error("User already exist!");
     }
 
+    // Generating a unique ID
+    const uniqueId = uuidV4();
+
+    // Hashed my password
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    // Created new User
+    const user = await Pool.query(createUser, [
+      uniqueId,
+      firstName,
+      lastName,
+      email,
+      hashPassword,
+      phone,
+    ]);
+
+    if (user) {
+      res.status(201).json({
+        status: "success",
+        message: "Registration Successful!",
+        data: user.rows,
+      });
+    } else {
+      res.status(400);
+      throw new Error("Registration unsuccessfull");
+    }
   } catch (error) {
-        next(error);
+    next(error);
   }
 };
 
-
-// @des Get All Users
-// @route POST /api/auth/getusers
+// @des Login User
+// @route POST /api/auth/login
 // @access Public
 export const getUsers = async (req: Request, res: Response) => {
   try {
@@ -82,15 +89,63 @@ export const getUsers = async (req: Request, res: Response) => {
 // @route POST /api/auth/register
 // @access Public
 
-const loginUser = async (req: Request, res: Response) =>{
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
 
-    const {email, password} = req.body;
-    
+    if (!email || !password) {
+      res.status(400);
+      throw new Error("All fields are mandatory!");
+    }
 
-}
+    const checkUser = await Pool.query(checkIfUserExist, [email]);
 
+    if (!checkUser.rows[0]) {
+      res.status(400);
+      throw new Error("User does not exist!");
+    }
 
+    const user = checkUser.rows[0];
 
-export const protectedRoute = async (req:URequest, res:Response) =>{
-    res.status(200).json(req.user)
-}
+    console.log(user);
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const token = jwt.sign(
+        {
+          id: user.userid,
+          email: user.email,
+        },
+        process.env.ACCESS_TOKEN!,
+        { expiresIn: "1d" }
+      );
+
+      res.status(400).json({
+        status: "success",
+        message: "Login successful",
+        data: {
+          accessToken: token,
+          user: {
+            userId: user.userid,
+            firstName: user.firstname,
+            lastNmae: user.lastname,
+            email: user.email,
+            phone: user.phone,
+          },
+        },
+      });
+    } else {
+      res.status(401);
+      throw new Error("Login unsuccessful!");
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const protectedRoute = async (req: URequest, res: Response) => {
+  res.status(200).json(req.user);
+};
