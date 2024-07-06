@@ -6,12 +6,15 @@ import {
   getAllUser,
 } from "../service/user.service";
 import bcrypt from "bcryptjs"
+import {v4 as uuidV4} from "uuid"
+import { URequest } from "../interfaces/user.interface";
 
 
 // @des Register User
 // @route POST /api/auth/register
 // @access Public
 export const registerUser = async (req: Request, res: Response, next:NextFunction) => {
+    
   try {
     const { firstName, lastName, email, password, phone } = req.body;
 
@@ -27,11 +30,15 @@ export const registerUser = async (req: Request, res: Response, next:NextFunctio
         throw new Error ("User already exist!")
     };
 
+    // Generating a unique ID
+    const uniqueId = uuidV4()
+
     // Hashed my password
     const hashPassword = await bcrypt.hash (password, 10);
 
     // Created new User
-    const user = await Pool.query(createUser,  [firstName, lastName, email, hashPassword, phone]);
+    const user = await Pool.query(createUser,  [uniqueId, firstName, lastName, email, hashPassword, phone]);
+
     if (user){
         res.status (201).json({
             status :"success",
@@ -49,6 +56,10 @@ export const registerUser = async (req: Request, res: Response, next:NextFunctio
   }
 };
 
+
+// @des Get All Users
+// @route POST /api/auth/getusers
+// @access Public
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const user = await Pool.query(getAllUser);
@@ -66,3 +77,20 @@ export const getUsers = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
+
+// @des Register User
+// @route POST /api/auth/register
+// @access Public
+
+const loginUser = async (req: Request, res: Response) =>{
+
+    const {email, password} = req.body;
+    
+
+}
+
+
+
+export const protectedRoute = async (req:URequest, res:Response) =>{
+    res.status(200).json(req.user)
+}
