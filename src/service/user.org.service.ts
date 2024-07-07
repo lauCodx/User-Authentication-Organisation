@@ -1,0 +1,1 @@
+ export const createUserOrg = "INSERT INTO users_organisations (user_id, org_id) VALUES ($1, $2)"

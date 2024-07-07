@@ -19,14 +19,24 @@ const createTable = async() =>{
     CREATE TABLE IF NOT EXISTS organisations (
     orgId UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    userId UUID REFERENCES users(userId)
+    description VARCHAR(255),
+    orgUserId UUID REFERENCES users(userId)
     )
     `
 
+    const createUsersOrganisationsTable = `
+    CREATE TABLE IF NOT EXISTS users_organisations (
+    user_id UUID REFERENCES users(userId),
+    org_id UUID REFERENCES organisations(orgId),
+    PRIMARY KEY (user_id, org_id)
+    )
+    `;
     try {
 
-        await Pool.query(createUserTable)
+        await Pool.query(createUserTable);
         await Pool.query(createOrganisationTable);
+        await Pool.query( createUsersOrganisationsTable);
+
         console.log('Table created successfully!')
         
     } catch (error) {

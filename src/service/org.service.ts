@@ -1,0 +1,1 @@
+export const createOrganisation = " INSERT INTO organisations (orgId, name, description, orgUserId) VALUES ($1, $2, $3, $4) RETURNING * ";

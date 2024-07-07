@@ -4,11 +4,14 @@ import {
   checkIfUserExist,
   createUser,
   getAllUser,
+  getUserById,
 } from "../service/user.service";
 import bcrypt from "bcryptjs";
 import { v4 as uuidV4 } from "uuid";
 import { URequest, userInterface } from "../interfaces/user.interface";
 import jwt from "jsonwebtoken";
+import { createOrganisation } from "../service/org.service";
+import { createUserOrg } from "../service/user.org.service";
 
 // @des Register User
 // @route POST /api/auth/register
@@ -49,6 +52,22 @@ export const registerUser = async (
       phone,
     ]);
 
+    const userId = user.rows[0].userId;
+
+    const description = 'This is the first organisation to be created with this user '
+    const orgName = `${firstName}'s Organisation`
+
+    const organisation = await Pool.query (createOrganisation, [
+        uniqueId,
+        orgName,
+        description,
+        userId
+    ])
+
+    const orgId = organisation.rows[0].orgId
+
+    await Pool.query (createUserOrg, [userId, orgId])
+
     if (user) {
       res.status(201).json({
         status: "success",
@@ -85,6 +104,37 @@ export const getUsers = async (req: Request, res: Response) => {
   }
 };
 
+export const getAUser = async (req:Request, res: Response, next:NextFunction) =>{
+    const { userId } = req.params;
+
+    try {
+        const users = await Pool.query(getUserById, [userId])  
+    
+        if (!users.rows[0]){
+            res.status(400);
+            throw new Error ("User not found!")
+        }
+        const user = users.rows[0]
+        res.status(200). json({
+            status: "success",
+            message: "User was fetched successfully",
+            data: {
+                user:{
+                    userId: user.userid,
+                    firstName: user.firstname,
+                    lastNmae: user.lastname,
+                    email: user.email,
+                    phone: user.phone,
+                }
+            }
+        })
+        
+    } catch (error) {
+        next(error)
+    }
+
+}
+
 // @des Register User
 // @route POST /api/auth/register
 // @access Public
@@ -102,6 +152,7 @@ export const loginUser = async (
       throw new Error("All fields are mandatory!");
     }
 
+    // Checking if user exist!
     const checkUser = await Pool.query(checkIfUserExist, [email]);
 
     if (!checkUser.rows[0]) {
@@ -146,6 +197,9 @@ export const loginUser = async (
   }
 };
 
+// @desc Protected route
+// @route POST /api/auth/protected
+// @access Private
 export const protectedRoute = async (req: URequest, res: Response) => {
   res.status(200).json(req.user);
 };
