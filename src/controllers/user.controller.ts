@@ -52,7 +52,26 @@ export const registerUser = async (
       phone,
     ]);
 
-    const userId = user.rows[0].userId;
+    const users =  user.rows[0]
+
+    if (user.rows[0]) {
+      res.status(201).json({
+        status: "success",
+        message: "Registration Successful!",
+        data: {
+          userId: users.userid,
+          firstName: users.firstname,
+          lastName: users.lastname,
+          email: users.email,
+          phone: users.phone
+        }
+      });
+    } else {
+      res.status(400);
+      throw new Error("Registration unsuccessfull");
+    }
+
+    const userId = user.rows[0].userid;
 
     const description = 'This is the first organisation to be created with this user '
     const orgName = `${firstName}'s Organisation`
@@ -64,20 +83,11 @@ export const registerUser = async (
         userId
     ])
 
-    const orgId = organisation.rows[0].orgId
+    const orgId = organisation.rows[0].orgid
 
     await Pool.query (createUserOrg, [userId, orgId])
 
-    if (user) {
-      res.status(201).json({
-        status: "success",
-        message: "Registration Successful!",
-        data: user.rows,
-      });
-    } else {
-      res.status(400);
-      throw new Error("Registration unsuccessfull");
-    }
+   
   } catch (error) {
     next(error);
   }

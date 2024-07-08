@@ -19,7 +19,7 @@ const createTable = async() =>{
     CREATE TABLE IF NOT EXISTS organisations (
     orgId UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    description VARCHAR(255),
+    description TEXT,
     orgUserId UUID REFERENCES users(userId)
     )
     `

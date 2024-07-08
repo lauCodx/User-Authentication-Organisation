@@ -142,11 +142,11 @@ const addUserToOrg =  async (req:URequest, res:Response, next:NextFunction) =>{
 
         const org = await Pool.query('SELECT orgId FROM users WHERE orgId = $1', [orgId])
 
-        if(!user.rows[0]){
+        if(!org.rows[0]){
             res.status(400);
             throw new Error ("Organisation not found")
-
         }
+        
         await Pool.query(
             'INSERT INTO users_organisations (user_id, org_id) VALUES ($1, $2)',
             [userId, orgId]
